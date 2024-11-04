@@ -23,10 +23,10 @@
 
 ##### Page Details
 - **Home Page:** A scrollable list of planned events and a mini calendar view.
-- **Calendar Page:** Fully functional calendar. Users can create events, and AI will find suitable times across all users' schedules.
+- **Calendar Page:** Fully functional calendar. Users can create events, and AI will find suitable times across all users' schedules. Users can indicate if events are high or low importance so they could perhaps be moved in favor of higher priority events.
 - **Search Page:** A list of events and nearby hangout spots. Nearby restaurants can advertise here. Users can also search for other users.
 - **Messages Page:** Allows users to message each other after connecting for easier scheduling.
-- **Profile Page:** Users create a profile with necessary details (for recommendations and connections) and upload their calendar.
+- **Profile Page:** Users create a profile with necessary details (for recommendations and connections) and upload their calendar. On account creation, there is a screen where users can indicate preferences (likes, dislikes, lifestyle) that the AI can then use to suggest times and places to hang out.
 
 ##### User Flow
 - **Home Page:** Main landing page where users can browse and navigate.
@@ -39,6 +39,7 @@
 - **Friending:** Users can friend each other to add them to events.
 - **Messaging:** Enables direct planning and scheduling.
 - **Profile:** Updatable with relevant information.
+- **Advertisements:** Users can pay to remove annoying pop-up advertisements and receive promotions and coupons from these restaurants instead. 
 
 #### B. Aesthetics
 
@@ -63,11 +64,5 @@
 
 #### Image Concepts
 [Image References](https://imgur.com/a/rPhqEjC)
+Logo is distinct from Apple Calendar with the Rendez-view name instead of Calendar so it's distinguishable.
 
----
-
-## Feedback
-- **Activity Suggestions:** Will users input preferences? Perhaps users can input preferences and rate activities afterward, allowing the app to improve suggestions over time.
-- **Ad Removal Option:** Will users be able to pay to remove ads?
-- **Degrees of Commitments:** Add flexibility for events that can be moved or are less rigid.
-- **Logo Design:** Ensure it’s distinct from the Apple Calendar logo to avoid user confusion.
