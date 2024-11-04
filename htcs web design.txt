@@ -1,0 +1,83 @@
+Rendez-View Web App
+Overview
+Rendez-View is a scheduling web app where people upload their schedules and add their friends while an AI determines when the next appropriate meeting time is. The AI will also suggest activities to do or places to eat in the vicinity of the users. You’ll be able to see your friends’ schedules to manually select a time if the user wants. The objective is to make interpersonal and group scheduling easier.
+1. Project Choice
+Option: Website Design
+Name: “Rendez-View”
+
+2. Purpose of the Game
+Goal: Provide an easy, fun scheduling experience where the user uploads their calendar and can easily schedule event and find places to meet. The objective is to remove the difficulty of finding common availability between large groups of people.
+Target Audience:
+Age Group: Ages 13 and up
+Interests: Having friends, fans of social connection, people that want to discover new places in their area
+
+3. Design
+A. Functionality
+Core Features
+Calendar upload:
+Users are able to import/link a Google or Outlook calendar to Rendez-View
+Users can also manually add events
+
+Different Tabs:
+Multiple tabs on the bottom (mobile)/side (web) of the screen to click on (Home, Calendar, Search, Messages, Profile
+
+Home Page:
+Scrollable list of different events planned/mini view of calendar
+
+Calendar Page:
+Fully functional calendar
+People can “Create an event” and add people and AI will automatically find a reasonable time on everyone’s calendar that works
+
+Search Page:
+Page with list of events and places nearby to hang out at
+Nearby restaurants can pay to advertise on the app
+Can also search for other users
+
+Messages Page:
+After connecting, users can message each other through the app for scheduling purposes
+
+Profile Page:
+Users can create a profile for themselves with necessary information (for recommendation and connection purposes) and upload their calendar
+
+User Flow
+Home Page:
+Main load-in page for people to browse and jump off of
+
+Calendar Page:
+Displays user’s calendar
+User can “Create an event” using a button, pulling up an event creation screen
+
+Transition:
+Users move between different pages using icons on the bottom or side of the screen
+
+Friending:
+Users can search for and friend each other on the Search page
+
+Interactive Elements
+Buttons: Different sections and calendar upload
+Friending: Users can search for and friend each other to add them to events
+Messaging: Users can plan and message each other through the app
+Profile: Updatable profile with relevant information
+
+B. Aesthetics
+Visual Style
+Theme: Red and white, but changeable
+
+Imagery and Iconography:
+Logo: On every page somewhere at the bottom
+
+Color Scheme
+Palette: Defaults to bright reds, but users can change the aesthetics in the settings page on the profile page
+
+Typography
+Font Style: Fera Sans (default: medium)
+Readability: Bold and clear to maintain readability against the bright, colorful background.
+
+Layout
+Screen Arrangement:
+Current Tab: The current tab occupies the majority of the screen, centered and prominent.
+Advertisements: Advertisements are placed between sections and at the bottom of the screen
+Navigation: Different tab icons are placed at the bottom of the screen/side of the screen for web
+
+
+image concepts: https://imgur.com/a/rPhqEjC
