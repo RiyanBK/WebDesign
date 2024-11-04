@@ -87,8 +87,7 @@ image concepts: https://imgur.com/a/rPhqEjC
 
 Feedback
 
-How will the app suggest activities? Will the users input preferences? 
-    -Maybe the users input preferences and the users rate the activity after doing it and the app learns and makes better suggestions.
+How will the app suggest activities? Will the users input preferences? Maybe the users input preferences and the users rate the activity after doing it and the app learns and makes better suggestions.
 
 Can users pay to get rid of ads?
 
