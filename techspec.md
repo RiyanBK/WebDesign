@@ -94,3 +94,43 @@
 - **Data Storage**: Firebase or compatible database for real-time updates
 
 This technical specification provides a structured guide for developing the core functionalities of the Rendez-View web app, from initial user onboarding to AI-driven scheduling and UI requirements.
+
+## Classes and Details
+
+### User Class
+
+**Variables:**
+- `username` (String): Unique identifier for each user.
+- `name` (String): User's name.
+- `email` (String): User's email for Google login.
+- `password` (String): User's password for login.
+- `friends` (List<User>): List of user IDs representing user's friends.
+- `permissions` (List<String>): Maps viewing permissions to each user.
+- `schedule` (List<eventName, time>): User's schedule data.
+- `location` (String): User's location.
+
+**Methods:**
+- `addFriend(friend_id)`: Adds a friend with the specified user ID `friend_id`.
+- `setPermission(friend_id, level)`: Sets viewing permissions for a particular friend.
+- `getPermission(friend_id)`: Returns viewing permissions for a particular friend.
+- `uploadSchedule(calendar_data)`: Uploads raw schedule data from Google Calendar or iCal.
+- `viewFriendSchedule(friend_id)`: Returns the schedule of a specified friend.
+- `login(email, password)`: Authenticates a user with email and password.
+- `login(user_id, password)`: Authenticates a user with username and password.
+
+
+### Meeting Class
+
+**Variables:**
+- `meeting_id` (String): Unique identifier for each meeting.
+- `time` (String): Time for the meeting.
+- `location` (String): Location for the meeting.
+- `accept` (boolean): Whether the meeting is accepted.
+
+### MeetingManager Class
+
+**Methods:**
+- `pickMeeting(List<Meeting>)`: Uses an algorithm to suggest a list of meetings based on user's schedules and locations. Users update the `accept` variable based on their availability.
+- `confirmMeeting(List<Meeting>)`: If both users accept a meeting, it adds the meeting to both users' schedules.
+
+### Figma: https://www.figma.com/board/WU4elqiWFVf5RrE9gzy8SM/scheduling_app?node-id=0-1&node-type=canvas&t=ojyl2TwezApu8vAq-0
