@@ -65,4 +65,3 @@
 #### Image Concepts
 [Image References](https://imgur.com/a/rPhqEjC)
 Logo is distinct from Apple Calendar with the Rendez-view name instead of Calendar so it's distinguishable.
-
