@@ -134,3 +134,4 @@ This technical specification provides a structured guide for developing the core
 - `confirmMeeting(List<Meeting>)`: If both users accept a meeting, it adds the meeting to both users' schedules.
 
 ### Figma: https://www.figma.com/board/WU4elqiWFVf5RrE9gzy8SM/scheduling_app?node-id=0-1&node-type=canvas&t=ojyl2TwezApu8vAq-0
+
