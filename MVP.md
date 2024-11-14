@@ -1,4 +1,17 @@
-# Rendez-View Web App
+# MVP Implementation Plan
+
+## Day 1-2 (Core Framework)
+- Users
+- Calendar
+- Database setup
+
+## Day 3-4 (Essential Features)
+- Friends and Meetings
+- UI and App
+
+## Day 5 (Enhancement & Testing)
+- UI and App Enhancements
+- Final testing and refinement
 
 ## Users
 
