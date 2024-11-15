@@ -8,96 +8,124 @@
         <h2>Login</h2>
         <input type="email" id="loginEmail" placeholder="Email">
         <input type="password" id="loginPassword" placeholder="Password">
-        <button onclick="login()">Login</button>
-        <button onclick="signup()">Sign Up</button>
+        <button id="loginButton">Login</button>
+        <button id="signupButton">Sign Up</button>
+        <p id="errorMessage" style="color: red;"></p>
     </div>
 
     <div id="userSection" style="display: none;">
         <h2>Welcome! You're logged in</h2>
-        <button onclick="logout()">Logout</button>
+        <button id="logoutButton">Logout</button>
     </div>
 
-    <!-- Import Firebase -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.9.0/firebase-app-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.9.0/firebase-auth-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.9.0/firebase-firestore-compat.min.js"></script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    <script>
-        // Your Firebase configuration (you'll need to add this)
+        // Your web app's Firebase configuration
         const firebaseConfig = {
-          apiKey: "AIzaSyDLkMG2Jrabl5P5MJobpKlq015PqsV2F-w",
-          authDomain: "rendez-view-1927.firebaseapp.com",
-          projectId: "rendez-view-1927",
-          storageBucket: "rendez-view-1927.firebasestorage.app",
-          messagingSenderId: "608896483975",
-          appId: "1:608896483975:web:d8be2d023dc9624c62ae22"
+            apiKey: "AIzaSyDLkMG2Jrabl5P5MJobpKlq015PqsV2F-w",
+            authDomain: "rendez-view-1927.firebaseapp.com",
+            projectId: "rendez-view-1927",
+            storageBucket: "rendez-view-1927.firebasestorage.app",
+            messagingSenderId: "608896483975",
+            appId: "1:608896483975:web:d8be2d023dc9624c62ae22"
         };
 
+        try {
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
 
+            // Function to display error messages
+            const showError = (message) => {
+                const errorElement = document.getElementById('errorMessage');
+                errorElement.textContent = message;
+                setTimeout(() => {
+                    errorElement.textContent = '';
+                }, 5000);
+            };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // Login function
-        function login() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    console.log("Logged in successfully!");
-                })
-                .catch((error) => {
-                    console.error("Error logging in:", error.message);
+            // Add event listeners after DOM is loaded
+            document.addEventListener('DOMContentLoaded', () => {
+                // Login button
+                document.getElementById('loginButton').addEventListener('click', async () => {
+                    try {
+                        const email = document.getElementById('loginEmail').value;
+                        const password = document.getElementById('loginPassword').value;
+                        await signInWithEmailAndPassword(auth, email, password);
+                        console.log("Logged in successfully!");
+                    } catch (error) {
+                        console.error("Error logging in:", error);
+                        showError(error.message);
+                    }
                 });
-        }
 
-        // Signup function
-        function signup() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
+                // Signup button
+                document.getElementById('signupButton').addEventListener('click', async () => {
+                    try {
+                        const email = document.getElementById('loginEmail').value;
+                        const password = document.getElementById('loginPassword').value;
+                        
+                        // Validate password length
+                        if (password.length < 6) {
+                            throw new Error("Password should be at least 6 characters long");
+                        }
 
-            auth.createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    // Create user document in Firestore
-                    return db.collection('users').doc(userCredential.user.uid).set({
-                        email: email,
-                        createdAt: new Date()
-                    });
-                })
-                .then(() => {
-                    console.log("User created successfully!");
-                })
-                .catch((error) => {
-                    console.error("Error creating user:", error.message);
+                        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                        
+                        // Create user document in Firestore
+                        try {
+                            await setDoc(doc(db, 'users', userCredential.user.uid), {
+                                email: email,
+                                createdAt: new Date().toISOString(),
+                                uid: userCredential.user.uid
+                            });
+                            console.log("User document created successfully!");
+                        } catch (firestoreError) {
+                            console.error("Firestore error:", firestoreError);
+                            showError("Account created but failed to save additional data. Please try logging in again.");
+                        }
+                    } catch (error) {
+                        console.error("Error creating user:", error);
+                        showError(error.message);
+                    }
                 });
-        }
 
-        // Logout function
-        function logout() {
-            auth.signOut()
-                .then(() => {
-                    console.log("Logged out successfully!");
-                })
-                .catch((error) => {
-                    console.error("Error logging out:", error.message);
+                // Logout button
+                document.getElementById('logoutButton').addEventListener('click', async () => {
+                    try {
+                        await signOut(auth);
+                        console.log("Logged out successfully!");
+                    } catch (error) {
+                        console.error("Error logging out:", error);
+                        showError(error.message);
+                    }
                 });
-        }
+            });
 
-        // Auth state observer
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                // User is signed in
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('userSection').style.display = 'block';
-            } else {
-                // User is signed out
-                document.getElementById('loginSection').style.display = 'block';
-                document.getElementById('userSection').style.display = 'none';
-            }
-        });
+            // Auth state observer
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // User is signed in
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('userSection').style.display = 'block';
+                    console.log("User is signed in with UID:", user.uid);
+                } else {
+                    // User is signed out
+                    document.getElementById('loginSection').style.display = 'block';
+                    document.getElementById('userSection').style.display = 'none';
+                    console.log("User is signed out");
+                }
+            });
+
+        } catch (initError) {
+            console.error("Firebase initialization error:", initError);
+            showError("Failed to initialize application. Please check your configuration.");
+        }
     </script>
 </body>
 </html>
