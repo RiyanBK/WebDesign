@@ -2,39 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/calendar-icon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rendez-View</title>
-    
-    <!-- Import Firebase -->
-    <script type="module">
-      // Import the functions you need from the SDKs you need
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-      import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-      import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-      // Your web app's Firebase configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyDLkMG2Jrabl5P5MJobpKlq015PqsV2F-w",
-        authDomain: "rendez-view-1927.firebaseapp.com",
-        projectId: "rendez-view-1927",
-        storageBucket: "rendez-view-1927.firebasestorage.app",
-        messagingSenderId: "608896483975",
-        appId: "1:608896483975:web:d8be2d023dc9624c62ae22"
-      };
-
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
-
-      // Make Firebase services available globally
-      window.auth = auth;
-      window.db = db;
-    </script>
   </head>
   <body>
-    <div id="root" class="h-full"></div>
+    <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
