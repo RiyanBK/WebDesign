@@ -30,7 +30,7 @@
 
 ##### User Flow
 - **Home Page:** Main landing page where users can browse and navigate.
-- **Calendar Page:** Displays the user’s calendar with a "Create an event" button for quick scheduling.
+- **Calendar Page:** Displays the user's calendar with a "Create an event" button for quick scheduling.
 - **Transition:** Users move between pages using icons at the bottom or side of the screen.
 - **Friending:** Users can search for and add friends on the Search page.
 

@@ -27,7 +27,7 @@
 
 **Simplifications:**
 - Friends list is P1
-- Just holds calander class and does not automatically import
+- Just holds calendar class and does not automatically import
 
 **Dependencies:**
 - Database setup
@@ -74,7 +74,7 @@
 - Website should be minimalized to only allow users to log in, and view calendars
 
 **Dependencies:**
-- Users and Calandars
+- Users and Calendars
 
 
 
