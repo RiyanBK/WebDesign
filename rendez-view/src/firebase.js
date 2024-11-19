@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, collection, query, where, getDocs, addDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDLkMG2Jrabl5P5MJobpKlq015PqsV2F-w",
@@ -15,5 +15,23 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Create composite index for events
+const createEventIndex = async () => {
+  try {
+    const eventsRef = collection(db, 'events');
+    await query(
+      eventsRef,
+      where('userId', '==', ''),
+      where('date', '>=', ''),
+      where('date', '<=', '')
+    );
+  } catch (error) {
+    console.error("Error creating index:", error);
+  }
+};
+
+// Call this function once
+createEventIndex();
 
 export default app;
