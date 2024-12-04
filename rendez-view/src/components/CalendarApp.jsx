@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import EventModal from "./EventModal";
-import { User as UserClass } from '../classes/User';
+import User from '../classes/User';
 import MeetingManager from '../classes/MeetingManager';
 
 const CalendarApp = ({ user: authUser }) => {
