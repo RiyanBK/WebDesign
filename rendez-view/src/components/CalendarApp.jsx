@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import EventModal from "./EventModal";
-import User from '../classes/User';
+import {default as UserModel} from '../classes/User';
 import MeetingManager from '../classes/MeetingManager';
 
 const CalendarApp = ({ user: authUser }) => {
@@ -20,6 +20,13 @@ const CalendarApp = ({ user: authUser }) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [events, setEvents] = useState([]);
+  const navItems = [
+    { id: "home", icon: Home, label: "Home" },
+    { id: "search", icon: Search, label: "Search" },
+    { id: "messages", icon: Mail, label: "Messages" },
+    { id: "calendar", icon: Calendar, label: "Calendar" },
+    { id: "profile", icon: User, label: "Profile" }
+  ];
   const [friendEvents, setFriendEvents] = useState([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [searchResults, setSearchResults] = useState([]);
@@ -31,7 +38,7 @@ const CalendarApp = ({ user: authUser }) => {
   useEffect(() => {
       const initializeUser = async () => {
           if (authUser) {
-              const userInstance = await UserClass.fromAuth(authUser);
+              const userInstance = await UserModel.fromAuth(authUser);
               setUser(userInstance);
               const manager = new MeetingManager(userInstance);
               setMeetingManager(manager);
