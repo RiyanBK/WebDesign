@@ -1,17 +1,19 @@
 # MVP Implementation Plan
 
 ## Day 1-2 (Core Framework)
-- Users
-- Calendar
-- Database setup
+- Users  (COMPLETE)
+- Calendar (COMPLETE)
+- Database setup (COMPLETE)
 
 ## Day 3-4 (Essential Features)
-- Friends and Meetings
-- UI and App
+- Friends and Meetings (IN PROGRESS)
+- UI and App (IN PROGRESS)
 
 ## Day 5 (Enhancement & Testing)
-- UI and App Enhancements
-- Final testing and refinement
+- UI and App Enhancements (IN PROGRESS)
+- Final testing and refinement (INCOMPLETE)
+
+//more information in `README.md`
 
 ## Users
 
