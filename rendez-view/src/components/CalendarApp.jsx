@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import EventModal from "./EventModal";
-import User from '../classes/User';
+import { User as UserClass } from '../classes/User';
 import MeetingManager from '../classes/MeetingManager';
 
 const CalendarApp = ({ user: authUser }) => {
@@ -31,7 +31,7 @@ const CalendarApp = ({ user: authUser }) => {
   useEffect(() => {
       const initializeUser = async () => {
           if (authUser) {
-              const userInstance = await User.fromAuth(authUser);
+              const userInstance = await UserClass.fromAuth(authUser);
               setUser(userInstance);
               const manager = new MeetingManager(userInstance);
               setMeetingManager(manager);
@@ -216,7 +216,7 @@ const CalendarApp = ({ user: authUser }) => {
     }
   }, [activeTab]);
 
-  
+
   const handleSaveEvent = async (eventDetails) => {
     try {
         if (!meetingManager) return;
