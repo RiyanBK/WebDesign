@@ -21,19 +21,18 @@
 **Implementation Timeline:** [Day 1]
 
 **Core Requirements:**
-- Store user schedules and logins
+- Store user schedules and logins (COMPLETE)
 
 **Technical Components:**
-- Needs a database to maintain user data
-- Class structure to create, update, and use user data
+- Needs a database to maintain user data (COMPLETE)
+- Class structure to create, update, and use user data (COMPLETE)
 
 **Simplifications:**
-- Friends list is P1
-- Just holds calendar class and does not automatically import
+- Friends list is P1 (IN PROGRESS)
+- Just holds calendar class and does not automatically import (IN PROGRESS)
 
 **Dependencies:**
 - Database setup
-
 
 
 ## Calendar
@@ -42,15 +41,14 @@
 **Implementation Timeline:** [Day 1-2]
 
 **Core Requirements:**
-- Can create times when a user is blocked
-- [Essential functionality 2]
+- Can create times when a user is blocked (INCOMPLETE)
 
 **Technical Components:**
-- Database storage for calendar
+- Database storage for calendar (COMPLETE)
 - I would recommend a subclass for meetings/scheduled times
 
 **Simplifications:**
-- Importing calendars from other sites is P2
+- Importing calendars from other sites is P2 (INCOMPLETE)
 - No security features
 - No automatic comparison to friend's schedules
 
