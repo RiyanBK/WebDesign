@@ -12,8 +12,10 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import EventModal from "./EventModal";
+import User from '../classes/User';
+import MeetingManager from '../classes/MeetingManager';
 
-const CalendarApp = ({ user }) => {
+const CalendarApp = ({ user: authUser }) => {
   const [activeTab, setActiveTab] = useState("calendar");
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -22,15 +24,21 @@ const CalendarApp = ({ user }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [searchResults, setSearchResults] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]);
+  const [user, setUser] = useState(null);
+  const [meetingManager, setMeetingManager] = useState(null);
 
-  // Navigation items
-  const navItems = [
-    { id: "home", icon: Home, label: "Home" },
-    { id: "search", icon: Search, label: "Search" },
-    { id: "messages", icon: Mail, label: "Messages" },
-    { id: "calendar", icon: Calendar, label: "Calendar" },
-    { id: "profile", icon: User, label: "Profile" },
-  ];
+  // Initialize user and meeting manager
+  useEffect(() => {
+      const initializeUser = async () => {
+          if (authUser) {
+              const userInstance = await User.fromAuth(authUser);
+              setUser(userInstance);
+              const manager = new MeetingManager(userInstance);
+              setMeetingManager(manager);
+          }
+      };
+      initializeUser();
+  }, [authUser]);
 
   // Days of the week header
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -208,26 +216,18 @@ const CalendarApp = ({ user }) => {
     }
   }, [activeTab]);
 
-  // Save event
+  
   const handleSaveEvent = async (eventDetails) => {
     try {
-      const eventData = {
-        ...eventDetails,
-        userId: user.uid,
-        createdAt: new Date().toISOString(),
-        date: new Date(eventDetails.date).toISOString().split("T")[0],
-      };
-
-      const docRef = await addDoc(collection(db, "events"), eventData);
-      setEvents((prevEvents) => [
-        ...prevEvents,
-        { id: docRef.id, ...eventData },
-      ]);
-      setShowModal(false);
+        if (!meetingManager) return;
+        
+        const meeting = await meetingManager.createMeeting(eventDetails);
+        setEvents(prevEvents => [...prevEvents, meeting]);
+        setShowModal(false);
     } catch (error) {
-      console.error("Error saving event:", error);
+        console.error("Error saving event:", error);
     }
-  };
+};
 
   // Generate calendar days
   const generateCalendarDays = () => {
