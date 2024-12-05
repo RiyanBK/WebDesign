@@ -46,6 +46,18 @@ const CalendarApp = ({ user: authUser }) => {
   const [searchMessage, setSearchMessage] = useState('');
   const [requestSentSuccess, setRequestSentSuccess] = useState(false);
 
+  // Friends-related states
+  const [friendsList, setFriendsList] = useState([]); 
+  const [friendsMap, setFriendsMap] = useState({});
+
+  // Friend event tooltip states
+  const [showFriendInfo, setShowFriendInfo] = useState(false);
+  const [friendInfoPosition, setFriendInfoPosition] = useState({ x: 0, y: 0 });
+  const [friendInfoEmail, setFriendInfoEmail] = useState('');
+
+  // A palette of colors for friends (no red)
+  const friendColors = ["#1E90FF", "#FFA500", "#32CD32", "#FFD700", "#8A2BE2", "#FF69B4", "#00CED1"];
+
   // Initialize user and meeting manager
   useEffect(() => {
     const initializeUser = async () => {
@@ -58,6 +70,48 @@ const CalendarApp = ({ user: authUser }) => {
     };
     initializeUser();
   }, [authUser]);
+
+  // After user is known, fetch accepted friends and assign colors
+  useEffect(() => {
+    const fetchFriendsList = async () => {
+      if (!user?.uid) return;
+
+      try {
+        // Fetch accepted friendships where the user is either sender or receiver
+        const friendshipsCollection = collection(db, "friendships");
+        const acceptedQuery = query(friendshipsCollection, where("status", "==", "accepted"));
+        const querySnapshot = await getDocs(acceptedQuery);
+
+        const friendData = [];
+        querySnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data.senderId === user.uid) {
+            friendData.push({ friendId: data.receiverId, email: data.receiverEmail });
+          } else if (data.receiverId === user.uid) {
+            friendData.push({ friendId: data.senderId, email: data.senderEmail });
+          }
+        });
+
+        // Assign a color to each friend
+        const updatedFriendsList = friendData.map((f, index) => ({
+          ...f,
+          color: friendColors[index % friendColors.length]
+        }));
+
+        const map = {};
+        updatedFriendsList.forEach(f => {
+          map[f.friendId] = { email: f.email, color: f.color };
+        });
+
+        setFriendsList(updatedFriendsList);
+        setFriendsMap(map);
+
+      } catch (error) {
+        console.error("Error fetching friends list:", error);
+      }
+    };
+    fetchFriendsList();
+  }, [user]);
 
   // Days of the week header
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -92,6 +146,7 @@ const CalendarApp = ({ user: authUser }) => {
       if (!user?.uid) return;
 
       try {
+        // Get all accepted friendships
         const friendshipsQuery = query(
           collection(db, "friendships"),
           where("status", "==", "accepted"),
@@ -270,7 +325,6 @@ const CalendarApp = ({ user: authUser }) => {
     if (activeTab === "messages") {
       fetchFriendRequests();
     } else {
-      // Reset friend requests if leaving messages tab
       setFriendRequests([]);
     }
 
@@ -299,6 +353,21 @@ const CalendarApp = ({ user: authUser }) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showEventMenu]);
+
+  // Close friend info on outside click
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (showFriendInfo) {
+        setShowFriendInfo(false);
+      }
+    };
+    if (showFriendInfo) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showFriendInfo]);
 
   const handleSaveEvent = async (eventDetails) => {
     try {
@@ -340,7 +409,6 @@ const CalendarApp = ({ user: authUser }) => {
       setSelectedEvent(null);
     } catch (error) {
       console.error("Error deleting event:", error);
-      // Likely Firestore rules related issue; adjust rules later
     }
   };
 
@@ -356,7 +424,6 @@ const CalendarApp = ({ user: authUser }) => {
       return;
     }
 
-    // If user searched their own email
     if (user && user.email.toLowerCase() === searchTerm.toLowerCase()) {
       setSearchMessage("That's your own account.");
       return;
@@ -370,10 +437,8 @@ const CalendarApp = ({ user: authUser }) => {
       if (querySnapshot.empty) {
         setSearchMessage("No user found with that email.");
       } else {
-        // Should only be one user since we query exact email
         const foundUserDoc = querySnapshot.docs[0];
         if (foundUserDoc.id === user.uid) {
-          // Already checked above, but just in case
           setSearchMessage("That's your own account.");
           return;
         }
@@ -501,10 +566,36 @@ const CalendarApp = ({ user: authUser }) => {
           <div className="p-4">
             <h2 className="text-xl font-semibold mb-4">Profile</h2>
             {user && (
-              <div className="p-4 border rounded">
+              <div className="p-4 border rounded mb-4">
                 <p className="text-gray-700 font-medium">Email: {user.email}</p>
               </div>
             )}
+
+            {/* Friends dropdown menu */}
+            <details className="mb-4">
+              <summary className="cursor-pointer text-lg font-semibold text-gray-700">
+                Friends
+              </summary>
+              <div className="mt-2 space-y-2">
+                {friendsList.length === 0 && (
+                  <p className="text-gray-500">No friends.</p>
+                )}
+                {friendsList.map((friend, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: '10px',
+                        height: '10px',
+                        backgroundColor: friend.color,
+                        borderRadius: '2px'
+                      }}
+                    ></span>
+                    <span className="text-gray-700">{friend.email}</span>
+                  </div>
+                ))}
+              </div>
+            </details>
           </div>
         );
 
@@ -550,30 +641,52 @@ const CalendarApp = ({ user: authUser }) => {
                         {date.getDate()}
                       </span>
                       <div className="mt-1 space-y-1">
-                        {getEventsForDate(date).map((event, eventIndex) => (
-                          <div
-                            key={eventIndex}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (event.isFriendEvent) return; // Prevent editing friend events
-                              setSelectedEvent(event);
-                              // Position the menu next to the cursor
-                              setMenuPosition({ x: e.clientX, y: e.clientY });
-                              setShowEventMenu(true);
-                            }}
-                            className={`text-xs p-1 rounded truncate ${
-                              event.isFriendEvent
-                                ? "bg-purple-100"
-                                : "bg-red-100"
-                            }`}
-                            title={`${event.title} (${event.startTime} - ${event.endTime})`}
-                          >
-                            {event.title}
-                            <div className="text-xs text-gray-500">
-                              {event.startTime} - {event.endTime}
+                        {getEventsForDate(date).map((event, eventIndex) => {
+                          const isFriendEvent = event.isFriendEvent;
+                          let eventStyle = {};
+                          let eventClasses = "text-xs p-1 rounded truncate";
+
+                          if (isFriendEvent) {
+                            // Use friend's assigned color
+                            const friendInfo = friendsMap[event.userId];
+                            const friendColor = friendInfo ? friendInfo.color : "#ccc";
+                            eventStyle = { backgroundColor: friendColor };
+                          } else {
+                            // User's events remain red
+                            eventClasses += " bg-red-100";
+                          }
+
+                          return (
+                            <div
+                              key={eventIndex}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isFriendEvent) {
+                                  // Show friend's info at cursor
+                                  const friendInfo = friendsMap[event.userId];
+                                  if (friendInfo) {
+                                    setFriendInfoEmail(friendInfo.email);
+                                    setFriendInfoPosition({ x: e.clientX, y: e.clientY });
+                                    setShowFriendInfo(true);
+                                  }
+                                } else {
+                                  // User's own event
+                                  setSelectedEvent(event);
+                                  setMenuPosition({ x: e.clientX, y: e.clientY });
+                                  setShowEventMenu(true);
+                                }
+                              }}
+                              className={eventClasses}
+                              style={eventStyle}
+                              title={`${event.title} (${event.startTime} - ${event.endTime})`}
+                            >
+                              {event.title}
+                              <div className="text-xs text-gray-500">
+                                {event.startTime} - {event.endTime}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </>
                   )}
@@ -613,6 +726,15 @@ const CalendarApp = ({ user: authUser }) => {
                 >
                   Cancel
                 </button>
+              </div>
+            )}
+
+            {showFriendInfo && (
+              <div
+                className="fixed bg-white border rounded shadow-md p-2 z-10"
+                style={{ top: friendInfoPosition.y, left: friendInfoPosition.x }}
+              >
+                <p className="text-sm text-gray-700">{friendInfoEmail}</p>
               </div>
             )}
           </div>
