@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Calendar, Plus, Home, Search, Mail, User } from "lucide-react";
 import {
   collection,
@@ -7,13 +7,15 @@ import {
   getDocs,
   addDoc,
   updateDoc,
+  deleteDoc,
   doc,
   getDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import EventModal from "./EventModal";
-import {default as UserModel} from '../classes/User';
+import { default as UserModel } from '../classes/User';
 import MeetingManager from '../classes/MeetingManager';
+import Meeting from '../classes/Meeting';
 
 const CalendarApp = ({ user: authUser }) => {
   const [activeTab, setActiveTab] = useState("calendar");
@@ -33,6 +35,9 @@ const CalendarApp = ({ user: authUser }) => {
   const [friendRequests, setFriendRequests] = useState([]);
   const [user, setUser] = useState(null);
   const [meetingManager, setMeetingManager] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showEventMenu, setShowEventMenu] = useState(false);
+  const eventMenuRef = useRef(null);
 
   // Initialize user and meeting manager
   useEffect(() => {
@@ -223,18 +228,63 @@ const CalendarApp = ({ user: authUser }) => {
     }
   }, [activeTab]);
 
+  // Close event menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (eventMenuRef.current && !eventMenuRef.current.contains(event.target)) {
+        setShowEventMenu(false);
+        setSelectedEvent(null);
+      }
+    };
+    if (showEventMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEventMenu]);
 
   const handleSaveEvent = async (eventDetails) => {
     try {
-        if (!meetingManager) return;
-        
+      if (!meetingManager) return;
+
+      if (eventDetails.meeting_id) {
+        // Update existing event
+        const meeting = new Meeting({
+          meeting_id: eventDetails.meeting_id,
+          ...eventDetails,
+          userId: user.uid
+        });
+        await meeting.save();
+        setEvents(prevEvents =>
+          prevEvents.map(ev => (ev.id === eventDetails.meeting_id ? { id: ev.id, ...eventDetails } : ev))
+        );
+      } else {
+        // Create new event
         const meeting = await meetingManager.createMeeting(eventDetails);
-        setEvents(prevEvents => [...prevEvents, meeting]);
-        setShowModal(false);
+        setEvents(prevEvents => [...prevEvents, { id: meeting.meeting_id, ...eventDetails }]);
+      }
+      setShowModal(false);
     } catch (error) {
-        console.error("Error saving event:", error);
+      console.error("Error saving event:", error);
     }
-};
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!selectedEvent) return;
+
+    try {
+      const meeting = new Meeting({ meeting_id: selectedEvent.id });
+      await meeting.delete();
+      setEvents(prevEvents =>
+        prevEvents.filter(event => event.id !== selectedEvent.id)
+      );
+      setShowEventMenu(false);
+      setSelectedEvent(null);
+    } catch (error) {
+      console.error("Error deleting event:", error);
+    }
+  };
 
   // Generate calendar days
   const generateCalendarDays = () => {
@@ -285,8 +335,6 @@ const CalendarApp = ({ user: authUser }) => {
                     const searchTerm = e.target.value.toLowerCase().trim();
                     if (searchTerm) {
                       try {
-                        console.log("Searching for:", searchTerm); // Debug log
-
                         const usersRef = collection(db, "users");
                         const q = query(
                           usersRef,
@@ -296,14 +344,11 @@ const CalendarApp = ({ user: authUser }) => {
                         const querySnapshot = await getDocs(q);
                         const results = [];
                         querySnapshot.forEach((doc) => {
-                          // Don't include current user in results
                           if (doc.id !== user.uid) {
-                            console.log("Found user:", doc.data()); // Debug log
                             results.push({ id: doc.id, ...doc.data() });
                           }
                         });
 
-                        console.log("Search results:", results); // Debug log
                         setSearchResults(results);
                       } catch (error) {
                         console.error("Error searching users:", error);
@@ -371,7 +416,7 @@ const CalendarApp = ({ user: authUser }) => {
 
       default:
         return (
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-6 relative">
             <div className="grid grid-cols-7 mb-4">
               {weekDays.map((day) => (
                 <div
@@ -388,7 +433,7 @@ const CalendarApp = ({ user: authUser }) => {
                 <div
                   key={index}
                   onClick={() => {
-                    if (date) {
+                    if (date && !selectedEvent) {
                       setSelectedDate(date);
                       setShowModal(true);
                     }
@@ -414,6 +459,12 @@ const CalendarApp = ({ user: authUser }) => {
                         {getEventsForDate(date).map((event, eventIndex) => (
                           <div
                             key={eventIndex}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (event.isFriendEvent) return; // Do not allow editing friend events
+                              setSelectedEvent(event);
+                              setShowEventMenu(true);
+                            }}
                             className={`text-xs p-1 rounded truncate ${
                               event.isFriendEvent
                                 ? "bg-purple-100"
@@ -433,6 +484,42 @@ const CalendarApp = ({ user: authUser }) => {
                 </div>
               ))}
             </div>
+
+            {showEventMenu && selectedEvent && (
+              <div
+                ref={eventMenuRef}
+                className="absolute bg-white border rounded shadow-md p-2 z-10"
+                style={{ top: '50%', left: '50%' }}
+              >
+                <button
+                  onClick={() => {
+                    setShowModal(true);
+                    setShowEventMenu(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => {
+                    handleDeleteEvent();
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => {
+                    setShowEventMenu(false);
+                    setSelectedEvent(null);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-500 hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
           </div>
         );
     }
@@ -503,6 +590,7 @@ const CalendarApp = ({ user: authUser }) => {
               onClick={() => {
                 setSelectedDate(new Date());
                 setShowModal(true);
+                setSelectedEvent(null);
               }}
               className="bg-white text-red-400 p-2 rounded-full hover:bg-red-50"
             >
@@ -518,9 +606,13 @@ const CalendarApp = ({ user: authUser }) => {
       {/* Event Modal */}
       <EventModal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => {
+          setShowModal(false);
+          setSelectedEvent(null);
+        }}
         onSave={handleSaveEvent}
         selectedDate={selectedDate}
+        eventData={selectedEvent}
       />
     </div>
   );
