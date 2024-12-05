@@ -40,6 +40,12 @@ const CalendarApp = ({ user: authUser }) => {
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const eventMenuRef = useRef(null);
 
+  // States for search functionality
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchedUser, setSearchedUser] = useState(null);
+  const [searchMessage, setSearchMessage] = useState('');
+  const [requestSentSuccess, setRequestSentSuccess] = useState(false);
+
   // Initialize user and meeting manager
   useEffect(() => {
     const initializeUser = async () => {
@@ -166,12 +172,11 @@ const CalendarApp = ({ user: authUser }) => {
 
       const existingRequestDocs = await getDocs(existingRequestQuery);
       if (!existingRequestDocs.empty) {
-        alert("Friend request already sent");
+        setSearchMessage("Friend request already sent");
         return;
       }
 
       const receiverDoc = await getDoc(doc(db, "users", friendId));
-
       await addDoc(collection(db, "friendships"), {
         senderId: user.uid,
         senderEmail: user.email,
@@ -181,15 +186,11 @@ const CalendarApp = ({ user: authUser }) => {
         createdAt: new Date().toISOString(),
       });
 
-      alert("Friend request sent!");
-      setSearchResults((prev) =>
-        prev.map((result) =>
-          result.id === friendId ? { ...result, requestSent: true } : result
-        )
-      );
+      setRequestSentSuccess(true);
+      setSearchMessage("Friend request sent successfully!");
     } catch (error) {
       console.error("Error sending friend request:", error);
-      alert("Failed to send friend request");
+      setSearchMessage("Failed to send friend request");
     }
   };
 
@@ -268,8 +269,17 @@ const CalendarApp = ({ user: authUser }) => {
   useEffect(() => {
     if (activeTab === "messages") {
       fetchFriendRequests();
+    } else {
+      // Reset friend requests if leaving messages tab
+      setFriendRequests([]);
     }
+
     if (activeTab === "search") {
+      // Reset search-related states when entering search tab
+      setSearchTerm('');
+      setSearchedUser(null);
+      setSearchMessage('');
+      setRequestSentSuccess(false);
       setSearchResults([]);
     }
   }, [activeTab]);
@@ -330,7 +340,49 @@ const CalendarApp = ({ user: authUser }) => {
       setSelectedEvent(null);
     } catch (error) {
       console.error("Error deleting event:", error);
-      // Check Firestore security rules for delete permissions
+      // Likely Firestore rules related issue; adjust rules later
+    }
+  };
+
+  // Search form submit
+  const handleSearchSubmit = async (e) => {
+    e.preventDefault();
+    setSearchedUser(null);
+    setSearchMessage('');
+    setRequestSentSuccess(false);
+
+    if (!searchTerm.trim()) {
+      setSearchMessage("Please enter an email.");
+      return;
+    }
+
+    // If user searched their own email
+    if (user && user.email.toLowerCase() === searchTerm.toLowerCase()) {
+      setSearchMessage("That's your own account.");
+      return;
+    }
+
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("email", "==", searchTerm.toLowerCase()));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        setSearchMessage("No user found with that email.");
+      } else {
+        // Should only be one user since we query exact email
+        const foundUserDoc = querySnapshot.docs[0];
+        if (foundUserDoc.id === user.uid) {
+          // Already checked above, but just in case
+          setSearchMessage("That's your own account.");
+          return;
+        }
+        setSearchedUser({ id: foundUserDoc.id, ...foundUserDoc.data() });
+        setSearchMessage("User found. Confirm sending friend request?");
+      }
+    } catch (error) {
+      console.error("Error searching users:", error);
+      setSearchMessage("Error occurred while searching. Try again.");
     }
   };
 
@@ -373,57 +425,39 @@ const CalendarApp = ({ user: authUser }) => {
         return (
           <div className="p-4">
             <h2 className="text-xl font-semibold mb-4">Search Users</h2>
-            <div className="mb-4">
+            <form onSubmit={handleSearchSubmit} className="mb-4">
               <div className="flex gap-2">
                 <input
                   type="email"
                   placeholder="Search by exact email..."
                   className="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-red-400"
-                  onChange={async (e) => {
-                    const searchTerm = e.target.value.toLowerCase().trim();
-                    if (searchTerm) {
-                      try {
-                        const usersRef = collection(db, "users");
-                        const q = query(
-                          usersRef,
-                          where("email", "==", searchTerm)
-                        );
-
-                        const querySnapshot = await getDocs(q);
-                        const results = [];
-                        querySnapshot.forEach((doc) => {
-                          if (doc.id !== user.uid) {
-                            results.push({ id: doc.id, ...doc.data() });
-                          }
-                        });
-
-                        setSearchResults(results);
-                      } catch (error) {
-                        console.error("Error searching users:", error);
-                      }
-                    } else {
-                      setSearchResults([]);
-                    }
-                  }}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
-              </div>
-            </div>
-            {searchResults.map((searchUser) => (
-              <div
-                key={searchUser.id}
-                className="flex items-center justify-between p-2 border rounded mb-2"
-              >
-                <span>{searchUser.email}</span>
                 <button
-                  onClick={() => sendFriendRequest(searchUser.id)}
+                  type="submit"
                   className="bg-red-400 text-white px-4 py-2 rounded hover:bg-red-500"
                 >
-                  Add Friend
+                  Search
                 </button>
               </div>
-            ))}
-            {searchResults.length === 0 && (
-              <p className="text-gray-500 text-center">No users found</p>
+            </form>
+            {searchMessage && (
+              <p className="text-gray-700 mb-4">{searchMessage}</p>
+            )}
+            {searchedUser && !requestSentSuccess && (
+              <div className="flex items-center justify-between p-2 border rounded mb-2">
+                <span>{searchedUser.email}</span>
+                <button
+                  onClick={() => sendFriendRequest(searchedUser.id)}
+                  className="bg-red-400 text-white px-4 py-2 rounded hover:bg-red-500"
+                >
+                  Confirm Friend Request
+                </button>
+              </div>
+            )}
+            {requestSentSuccess && (
+              <p className="text-green-600 font-semibold">Friend request sent!</p>
             )}
           </div>
         );
@@ -458,6 +492,18 @@ const CalendarApp = ({ user: authUser }) => {
               <p className="text-gray-500 text-center">
                 No pending friend requests
               </p>
+            )}
+          </div>
+        );
+
+      case "profile":
+        return (
+          <div className="p-4">
+            <h2 className="text-xl font-semibold mb-4">Profile</h2>
+            {user && (
+              <div className="p-4 border rounded">
+                <p className="text-gray-700 font-medium">Email: {user.email}</p>
+              </div>
             )}
           </div>
         );
