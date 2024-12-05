@@ -37,19 +37,20 @@ const CalendarApp = ({ user: authUser }) => {
   const [meetingManager, setMeetingManager] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showEventMenu, setShowEventMenu] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const eventMenuRef = useRef(null);
 
   // Initialize user and meeting manager
   useEffect(() => {
-      const initializeUser = async () => {
-          if (authUser) {
-              const userInstance = await UserModel.fromAuth(authUser);
-              setUser(userInstance);
-              const manager = new MeetingManager(userInstance);
-              setMeetingManager(manager);
-          }
-      };
-      initializeUser();
+    const initializeUser = async () => {
+      if (authUser) {
+        const userInstance = await UserModel.fromAuth(authUser);
+        setUser(userInstance);
+        const manager = new MeetingManager(userInstance);
+        setMeetingManager(manager);
+      }
+    };
+    initializeUser();
   }, [authUser]);
 
   // Days of the week header
@@ -80,56 +81,54 @@ const CalendarApp = ({ user: authUser }) => {
   }, [user, currentMonth]);
 
   // Fetch friend events
-  const fetchFriendEvents = async () => {
-    if (!user?.uid) return;
-
-    try {
-      // Get all accepted friendships
-      const friendshipsQuery = query(
-        collection(db, "friendships"),
-        where("status", "==", "accepted"),
-        where("senderId", "==", user.uid)
-      );
-
-      const receiverQuery = query(
-        collection(db, "friendships"),
-        where("status", "==", "accepted"),
-        where("receiverId", "==", user.uid)
-      );
-
-      const [senderSnapshot, receiverSnapshot] = await Promise.all([
-        getDocs(friendshipsQuery),
-        getDocs(receiverQuery),
-      ]);
-
-      const friendIds = new Set();
-      senderSnapshot.forEach((doc) => friendIds.add(doc.data().receiverId));
-      receiverSnapshot.forEach((doc) => friendIds.add(doc.data().senderId));
-
-      // Fetch events for each friend
-      const allFriendEvents = [];
-      for (const friendId of friendIds) {
-        const eventsQuery = query(
-          collection(db, "events"),
-          where("userId", "==", friendId)
-        );
-        const eventSnapshot = await getDocs(eventsQuery);
-        eventSnapshot.forEach((doc) => {
-          allFriendEvents.push({
-            id: doc.id,
-            ...doc.data(),
-            isFriendEvent: true,
-          });
-        });
-      }
-
-      setFriendEvents(allFriendEvents);
-    } catch (error) {
-      console.error("Error fetching friend events:", error);
-    }
-  };
-
   useEffect(() => {
+    const fetchFriendEvents = async () => {
+      if (!user?.uid) return;
+
+      try {
+        const friendshipsQuery = query(
+          collection(db, "friendships"),
+          where("status", "==", "accepted"),
+          where("senderId", "==", user.uid)
+        );
+
+        const receiverQuery = query(
+          collection(db, "friendships"),
+          where("status", "==", "accepted"),
+          where("receiverId", "==", user.uid)
+        );
+
+        const [senderSnapshot, receiverSnapshot] = await Promise.all([
+          getDocs(friendshipsQuery),
+          getDocs(receiverQuery),
+        ]);
+
+        const friendIds = new Set();
+        senderSnapshot.forEach((doc) => friendIds.add(doc.data().receiverId));
+        receiverSnapshot.forEach((doc) => friendIds.add(doc.data().senderId));
+
+        const allFriendEvents = [];
+        for (const friendId of friendIds) {
+          const eventsQuery = query(
+            collection(db, "events"),
+            where("userId", "==", friendId)
+          );
+          const eventSnapshot = await getDocs(eventsQuery);
+          eventSnapshot.forEach((doc) => {
+            allFriendEvents.push({
+              id: doc.id,
+              ...doc.data(),
+              isFriendEvent: true,
+            });
+          });
+        }
+
+        setFriendEvents(allFriendEvents);
+      } catch (error) {
+        console.error("Error fetching friend events:", error);
+      }
+    };
+
     fetchFriendEvents();
   }, [user]);
 
@@ -208,6 +207,53 @@ const CalendarApp = ({ user: authUser }) => {
       );
 
       if (action === "accept") {
+        // Refresh friend events after accepting
+        const fetchFriendEvents = async () => {
+          if (!user?.uid) return;
+
+          try {
+            const friendshipsQuery = query(
+              collection(db, "friendships"),
+              where("status", "==", "accepted"),
+              where("senderId", "==", user.uid)
+            );
+
+            const receiverQuery = query(
+              collection(db, "friendships"),
+              where("status", "==", "accepted"),
+              where("receiverId", "==", user.uid)
+            );
+
+            const [senderSnapshot, receiverSnapshot] = await Promise.all([
+              getDocs(friendshipsQuery),
+              getDocs(receiverQuery),
+            ]);
+
+            const friendIds = new Set();
+            senderSnapshot.forEach((doc) => friendIds.add(doc.data().receiverId));
+            receiverSnapshot.forEach((doc) => friendIds.add(doc.data().senderId));
+
+            const allFriendEvents = [];
+            for (const friendId of friendIds) {
+              const eventsQuery = query(
+                collection(db, "events"),
+                where("userId", "==", friendId)
+              );
+              const eventSnapshot = await getDocs(eventsQuery);
+              eventSnapshot.forEach((doc) => {
+                allFriendEvents.push({
+                  id: doc.id,
+                  ...doc.data(),
+                  isFriendEvent: true,
+                });
+              });
+            }
+
+            setFriendEvents(allFriendEvents);
+          } catch (error) {
+            console.error("Error fetching friend events:", error);
+          }
+        };
         fetchFriendEvents();
       }
 
@@ -265,6 +311,7 @@ const CalendarApp = ({ user: authUser }) => {
         setEvents(prevEvents => [...prevEvents, { id: meeting.meeting_id, ...eventDetails }]);
       }
       setShowModal(false);
+      setSelectedEvent(null);
     } catch (error) {
       console.error("Error saving event:", error);
     }
@@ -283,6 +330,7 @@ const CalendarApp = ({ user: authUser }) => {
       setSelectedEvent(null);
     } catch (error) {
       console.error("Error deleting event:", error);
+      // Check Firestore security rules for delete permissions
     }
   };
 
@@ -461,8 +509,10 @@ const CalendarApp = ({ user: authUser }) => {
                             key={eventIndex}
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (event.isFriendEvent) return; // Do not allow editing friend events
+                              if (event.isFriendEvent) return; // Prevent editing friend events
                               setSelectedEvent(event);
+                              // Position the menu next to the cursor
+                              setMenuPosition({ x: e.clientX, y: e.clientY });
                               setShowEventMenu(true);
                             }}
                             className={`text-xs p-1 rounded truncate ${
@@ -488,8 +538,8 @@ const CalendarApp = ({ user: authUser }) => {
             {showEventMenu && selectedEvent && (
               <div
                 ref={eventMenuRef}
-                className="absolute bg-white border rounded shadow-md p-2 z-10"
-                style={{ top: '50%', left: '50%' }}
+                className="fixed bg-white border rounded shadow-md p-2 z-10"
+                style={{ top: menuPosition.y, left: menuPosition.x }}
               >
                 <button
                   onClick={() => {
@@ -519,7 +569,6 @@ const CalendarApp = ({ user: authUser }) => {
                 </button>
               </div>
             )}
-
           </div>
         );
     }
@@ -530,7 +579,6 @@ const CalendarApp = ({ user: authUser }) => {
       {/* Side Navigation */}
       <nav className="w-20 bg-white border-r border-gray-200 flex flex-col items-center py-4 gap-8">
         {navItems.map((item) => (
-          // Update the nav button onClick in the return statement:
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
@@ -547,7 +595,6 @@ const CalendarApp = ({ user: authUser }) => {
 
       {/* Main Content */}
       <div className="flex-1">
-        {/* Header for Calendar view */}
         {activeTab === "calendar" && (
           <header className="p-6 bg-red-400 text-white flex justify-between items-center">
             <div className="flex items-center gap-4">
@@ -599,7 +646,6 @@ const CalendarApp = ({ user: authUser }) => {
           </header>
         )}
 
-        {/* Main Content Area */}
         {renderActiveTabContent()}
       </div>
 
