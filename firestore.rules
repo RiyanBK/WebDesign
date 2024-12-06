@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Users Collection
+    match /users/{userId} {
+      // A user can read their own user document to access their friends array.
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // A user can create their user document upon registration
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // A user can update their own user document (e.g., to add friends)
+      allow update: if request.auth != null && request.auth.uid == userId;
+      // Optionally, a user can delete their own user document if needed
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Events Collection
+    match /events/{eventId} {
+      // Allow read if the user is authenticated and is either:
+      // - The owner of the event (resource.data.userId == request.auth.uid)
+      // - OR the owner of the event is in their friends list.
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        resource.data.userId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.friends
+      );
+
+      // Allow create if the user is authenticated and is the owner of the event
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+
+      // Allow update if the user is authenticated and owns the event
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+
+      // Allow delete if the user is authenticated and owns the event
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    // Friendships Collection
+    match /friendships/{friendshipId} {
+      // Allow read if the authenticated user is either the sender or the receiver of the friendship
+      allow read: if request.auth != null &&
+        (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
+
+      // Allow creating a friendship if authenticated (sending a friend request)
+      allow create: if request.auth != null;
+
+      // Allow updating a friendship (e.g., accepting or rejecting requests) if authenticated and involved
+      allow update: if request.auth != null &&
+        (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
+
+      // Allow deletion of a friendship if authenticated and involved 
+      // (In many cases, you may not need to delete friendships, but this is here for completeness)
+      allow delete: if request.auth != null &&
+        (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
+    }
+
+  }
+}
