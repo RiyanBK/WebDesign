@@ -1,5 +1,5 @@
 import { db } from '../firebase';
-import { doc, addDoc, collection, updateDoc } from 'firebase/firestore';
+import { doc, addDoc, collection, updateDoc, deleteDoc } from 'firebase/firestore';
 
 class Meeting {
     constructor(data) {
@@ -41,6 +41,13 @@ class Meeting {
             this.meeting_id = docRef.id;
         }
         return this;
+    }
+
+    async delete() {
+        if (!this.meeting_id) {
+            throw new Error('Cannot delete a meeting without an ID');
+        }
+        await deleteDoc(doc(db, 'events', this.meeting_id));
     }
 
     setAcceptance(status) {

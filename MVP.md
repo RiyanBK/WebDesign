@@ -96,3 +96,45 @@
 
 **Dependencies:**
 - Calendar and Friends List
+
+
+**Summary of Implementations from Employee work #1**
+
+1. **Event Editing and Deletion:**
+   - Implemented a dropdown menu on the calendar view events.
+   - Clicking an event shows options to edit or delete.
+   - **Edit**: Opens the event modal with pre-filled data, allowing the user to modify and save changes.
+   - **Delete**: Removes the event from Firestore and the UI (requires correct Firestore rules).
+
+2. **Friend Request System:**
+   - In the "Search" tab, a user enters another user's exact email.
+   - If a matching user is found (and not the current user), a confirmation option appears to send a friend request.
+   - On confirmation, a success message appears.
+   - The recipient sees the friend request under the "Messages" tab, with options to accept or reject.
+
+3. **Profile Tab (Basic View):**
+   - Clicking the "Profile" icon displays the user’s own email.
+   - Shows a dropdown menu listing all accepted friends.
+   - Each friend is accompanied by a unique colored square.
+
+4. **Color-Coded Friend Events on the Calendar:**
+   - User’s events remain red.
+   - Each friend’s events have their own unique color, different from red.
+   - Clicking a friend’s event shows a tooltip at the cursor’s position with the friend’s email.
+
+**Addressing Permissions Errors:**
+- "Missing or insufficient permissions" errors were encountered when viewing friend events, or deleting events due to Firestore security rules.
+- I provided a `firestore.rules` file with appropriate permissions:
+  - Users can read/write their own events.
+  - Users can read their friends’ events (checked against their `friends` array).
+  - Users can read/update friendship documents if they’re involved (as sender or receiver).
+  - Users can delete their own events.
+  
+**How to Use the Provided Firestore Rules:**
+1. **Local `firestore.rules` File:**
+   - Place the provided rules in `firestore.rules` at your project root (or desired location).
+
+2. **Using the Firebase Console (Optional):**
+   - Copy and paste the rules into the Firebase Console under Firestore > Rules and publish them.
+
+By following these steps and ensuring your data model matches the assumptions (events have `userId`, users have a `friends` array, friendships have `senderId`, `receiverId`, and `status`), the code and features should work smoothly without permission issues.

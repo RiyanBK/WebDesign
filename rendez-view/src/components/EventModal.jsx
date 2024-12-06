@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
-const EventModal = ({ isOpen, onClose, onSave, selectedDate }) => {
-  const [eventData, setEventData] = useState({
+const EventModal = ({ isOpen, onClose, onSave, selectedDate, eventData }) => {
+  const [eventDetails, setEventDetails] = useState({
     title: '',
     date: selectedDate ? new Date(selectedDate).toISOString().split('T')[0] : '',
     startTime: '',
@@ -10,20 +10,37 @@ const EventModal = ({ isOpen, onClose, onSave, selectedDate }) => {
     location: ''
   });
 
+  useEffect(() => {
+    if (eventData) {
+      setEventDetails({
+        title: eventData.title || '',
+        date: eventData.date || '',
+        startTime: eventData.startTime || '',
+        endTime: eventData.endTime || '',
+        location: eventData.location || ''
+      });
+    } else if (selectedDate) {
+      setEventDetails((prev) => ({
+        ...prev,
+        date: new Date(selectedDate).toISOString().split('T')[0],
+      }));
+    }
+  }, [eventData, selectedDate]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(eventData);
+    onSave({ ...eventDetails, meeting_id: eventData?.id || null });
     onClose();
-    setEventData({ title: '', date: '', startTime: '', endTime: '', location: '' });
+    setEventDetails({ title: '', date: '', startTime: '', endTime: '', location: '' });
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Add New Event</h2>
+          <h2 className="text-xl font-semibold">{eventData ? 'Edit Event' : 'Add New Event'}</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X size={24} />
           </button>
@@ -36,8 +53,8 @@ const EventModal = ({ isOpen, onClose, onSave, selectedDate }) => {
               <input
                 type="text"
                 required
-                value={eventData.title}
-                onChange={(e) => setEventData({ ...eventData, title: e.target.value })}
+                value={eventDetails.title}
+                onChange={(e) => setEventDetails({ ...eventDetails, title: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 border"
               />
             </div>
@@ -47,8 +64,8 @@ const EventModal = ({ isOpen, onClose, onSave, selectedDate }) => {
               <input
                 type="date"
                 required
-                value={eventData.date}
-                onChange={(e) => setEventData({ ...eventData, date: e.target.value })}
+                value={eventDetails.date}
+                onChange={(e) => setEventDetails({ ...eventDetails, date: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 border"
               />
             </div>
@@ -59,8 +76,8 @@ const EventModal = ({ isOpen, onClose, onSave, selectedDate }) => {
                 <input
                   type="time"
                   required
-                  value={eventData.startTime}
-                  onChange={(e) => setEventData({ ...eventData, startTime: e.target.value })}
+                  value={eventDetails.startTime}
+                  onChange={(e) => setEventDetails({ ...eventDetails, startTime: e.target.value })}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 border"
                 />
               </div>
@@ -70,8 +87,8 @@ const EventModal = ({ isOpen, onClose, onSave, selectedDate }) => {
                 <input
                   type="time"
                   required
-                  value={eventData.endTime}
-                  onChange={(e) => setEventData({ ...eventData, endTime: e.target.value })}
+                  value={eventDetails.endTime}
+                  onChange={(e) => setEventDetails({ ...eventDetails, endTime: e.target.value })}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 border"
                 />
               </div>
@@ -81,8 +98,8 @@ const EventModal = ({ isOpen, onClose, onSave, selectedDate }) => {
               <label className="block text-sm font-medium text-gray-700">Location</label>
               <input
                 type="text"
-                value={eventData.location}
-                onChange={(e) => setEventData({ ...eventData, location: e.target.value })}
+                value={eventDetails.location}
+                onChange={(e) => setEventDetails({ ...eventDetails, location: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 border"
               />
             </div>
@@ -99,7 +116,7 @@ const EventModal = ({ isOpen, onClose, onSave, selectedDate }) => {
                 type="submit"
                 className="px-4 py-2 text-sm font-medium text-white bg-red-400 rounded-md hover:bg-red-500"
               >
-                Save Event
+                {eventData ? 'Update Event' : 'Save Event'}
               </button>
             </div>
           </div>
