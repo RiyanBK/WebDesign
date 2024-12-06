@@ -129,6 +129,7 @@
   - Users can read their friends’ events (checked against their `friends` array).
   - Users can read/update friendship documents if they’re involved (as sender or receiver).
   - Users can delete their own events.
+### note from riyan: the firestore.rules don't work and it needs different permissions to work
   
 **How to Use the Provided Firestore Rules:**
 1. **Local `firestore.rules` File:**
